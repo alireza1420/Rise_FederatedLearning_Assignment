@@ -6,6 +6,7 @@ import torch.nn.functional as F
 import torch.optim as optim
 import matplotlib.pyplot as plt
 import numpy as np
+import csv
 
 num_epochs=10
 
@@ -70,6 +71,10 @@ if __name__ == '__main__':
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.SGD(net.parameters(), lr=0.001, momentum=0.9)
 
+    # At the start (outside the loop), write header
+    with open(f"metrics_{num_epochs}_epochs.csv", "w", newline='') as f:
+        writer = csv.writer(f)
+        writer.writerow(["Epoch", "Loss", "Accuracy"])
     for epoch in range(num_epochs):
         # Training phase
         running_loss = 0.0
@@ -112,8 +117,14 @@ if __name__ == '__main__':
         epoch_accuracy = 100 * correct / total
         test_accuracies.append(epoch_accuracy)
         net.train()  # Set back to training mode
-        
-        print(f'Epoch {epoch + 1}/{num_epochs} - Training Loss: {avg_epoch_loss:.3f} - Test Accuracy: {epoch_accuracy:.2f}%')
+
+
+    
+
+        # Inside the loop
+        with open(f"metrics_{num_epochs}_epochs.csv", "a", newline='') as f:
+            writer = csv.writer(f)
+            writer.writerow([epoch + 1, avg_epoch_loss, epoch_accuracy])
 
     print("Training done here!")
 
@@ -183,4 +194,27 @@ if __name__ == '__main__':
         accuracy = 100 * float(correct_count) / total_pred[classname]
         print(f'Accuracy for class: {classname:5s} is {accuracy:.1f} %')
 
-  
+    plt.figure(figsize=(12, 5))
+
+    # Plot 1: Training Loss
+    plt.subplot(1, 2, 1)
+    plt.plot(train_losses, label='Training Loss', color='blue', marker='o')
+    plt.title('Training Loss over Epochs')
+    plt.xlabel('Epoch')
+    plt.ylabel('Loss')
+    plt.legend()
+    plt.grid(True)
+
+    # Plot 2: Test Accuracy
+    plt.subplot(1, 2, 2)
+    plt.plot(test_accuracies, label='Test Accuracy', color='orange', marker='o')
+    plt.title('Test Accuracy over Epochs')
+    plt.xlabel('Epoch')
+    plt.ylabel('Accuracy (%)')
+    plt.legend()
+    plt.grid(True)
+
+    plt.tight_layout()
+    plt.show()
+
+    
