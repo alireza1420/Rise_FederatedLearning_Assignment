@@ -7,6 +7,7 @@ import torch.optim as optim
 import matplotlib.pyplot as plt
 import numpy as np
 
+num_epochs=10
 
 def imshow(img):
     img = img / 2 + 0.5     
@@ -40,11 +41,14 @@ if __name__ == '__main__':
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
     print(device)
 
+    train_losses = []
+    test_accuracies = []
+
     transform = transforms.Compose(
         [transforms.ToTensor(),
          transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
 
-    batch_size = 4
+    batch_size = 64
 
     trainset = torchvision.datasets.CIFAR10(root='./data', train=True,
                                             download=True, transform=transform)
@@ -66,7 +70,8 @@ if __name__ == '__main__':
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.SGD(net.parameters(), lr=0.001, momentum=0.9)
 
-    for epoch in range(1):
+    for epoch in range(num_epochs):
+        # Training phase
         running_loss = 0.0
         for i, data in enumerate(trainloader, 0):
             inputs, labels = data
@@ -74,17 +79,43 @@ if __name__ == '__main__':
             labels = labels.to(device)  
 
             optimizer.zero_grad()
-
             outputs = net(inputs)
             loss = criterion(outputs, labels)
             loss.backward()
             optimizer.step()
 
             running_loss += loss.item()
+            
             if i % 2000 == 1999:    # print every 2000 mini-batches
                 print(f'[{epoch + 1}, {i + 1:5d}] loss: {running_loss / 2000:.3f}')
                 running_loss = 0.0
-    print("Training done here !")
+        
+        # Calculate average loss for the epoch
+        avg_epoch_loss = running_loss / (len(trainloader) % 2000)  # remaining batches
+        train_losses.append(avg_epoch_loss)
+        
+        # Evaluation phase - AFTER the epoch
+        correct = 0
+        total = 0
+        net.eval()  # Set to evaluation mode
+        with torch.no_grad():
+            for data in testloader:
+                images, labels = data
+                images = images.to(device)
+                labels = labels.to(device)
+
+                outputs = net(images)
+                _, predicted = torch.max(outputs, 1)
+                total += labels.size(0)
+                correct += (predicted == labels).sum().item()
+        
+        epoch_accuracy = 100 * correct / total
+        test_accuracies.append(epoch_accuracy)
+        net.train()  # Set back to training mode
+        
+        print(f'Epoch {epoch + 1}/{num_epochs} - Training Loss: {avg_epoch_loss:.3f} - Test Accuracy: {epoch_accuracy:.2f}%')
+
+    print("Training done here!")
 
     PATH = './cifar_net.pth'
     torch.save(net.state_dict(), PATH)
@@ -124,7 +155,7 @@ if __name__ == '__main__':
             total += labels.size(0)
             correct += (predicted == labels).sum().item()
 
-    print(f'Accuracy of the network on the 10000 test images: {100 * correct / total} %')
+    print(f'Accuracy of the network on the {len(testloader)} test images: {100 * correct / total} %')
 
     # prepare to count predictions for each class
     correct_pred = {classname: 0 for classname in classes}
@@ -134,9 +165,11 @@ if __name__ == '__main__':
     with torch.no_grad():
         for data in testloader:
             images, labels = data
-            outputs = net(images)
             images=images.to(device)
             labels=labels.to(device)
+            
+            outputs = net(images)
+          
 
             _, predictions = torch.max(outputs, 1)
             # collect the correct predictions for each class
