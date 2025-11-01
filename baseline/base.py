@@ -72,7 +72,7 @@ if __name__ == '__main__':
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.SGD(net.parameters(), lr=0.001, momentum=0.9)
     #start keeping record
-    with open(f"metrics_{num_epochs}_epochs.csv", "w", newline='') as f:
+    with open(f"Base_Records/metrics_{num_epochs}_epochs.csv", "w", newline='') as f:
         writer = csv.writer(f)
         writer.writerow(["Epoch", "Loss", "Accuracy","Record_time_eval_and_train"])
 
