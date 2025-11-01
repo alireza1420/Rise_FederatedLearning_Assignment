@@ -21,12 +21,12 @@ def imshow(img):
 class Net(nn.Module):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.conv1=nn.Conv2d(3,6,5)
+        self.conv1=nn.Conv2d(3,16,5)
         self.pool=nn.MaxPool2d(2,2)
-        self.conv2=nn.Conv2d(6,16,5)
-        self.fc1=nn.Linear(16*5*5,120)
-        self.fc2=nn.Linear(120,84)
-        self.fc3=nn.Linear(84,10)
+        self.conv2=nn.Conv2d(16,64,5)
+        self.fc1=nn.Linear(64*5*5,256)
+        self.fc2=nn.Linear(256,128)
+        self.fc3=nn.Linear(128,10)
 
     def forward(self,x):
         x=self.pool(F.relu(self.conv1(x)))
@@ -50,7 +50,7 @@ if __name__ == '__main__':
         [transforms.ToTensor(),
          transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
 
-    batch_size = 16
+    batch_size = 32
 
     trainset = torchvision.datasets.CIFAR10(root='./data', train=True,
                                             download=True, transform=transform)
@@ -70,9 +70,9 @@ if __name__ == '__main__':
 
 
     criterion = nn.CrossEntropyLoss()
-    optimizer = optim.SGD(net.parameters(), lr=0.001, momentum=0.9)
+    optimizer = optim.SGD(net.parameters(), lr=0.00655453, momentum=0.838864)
     #start keeping record
-    with open(f"Base_Records/metrics_{num_epochs}_epochs.csv", "w", newline='') as f:
+    with open(f"./Base_Records/metrics_{num_epochs}_epochs.csv", "a+", newline='') as f:
         writer = csv.writer(f)
         writer.writerow(["Epoch", "Loss", "Accuracy","Record_time_eval_and_train"])
 
