@@ -8,6 +8,7 @@ from flwr_datasets import FederatedDataset
 from flwr_datasets.partitioner import IidPartitioner
 from torch.utils.data import DataLoader
 from torchvision.transforms import Compose, Normalize, ToTensor
+import time
 
 
 class Net(nn.Module):
@@ -72,9 +73,10 @@ def load_centralized_dataset():
 
 def train(net, trainloader, epochs, lr, device):
     """Train the model on the training set."""
+    train_start_time = time.time()
     net.to(device)  # move model to GPU if available
     criterion = torch.nn.CrossEntropyLoss().to(device)
-    optimizer = torch.optim.Adam(net.parameters(), lr=lr)
+    optimizer = torch.optim.SGD(net.parameters(), lr=lr)
     net.train()
     running_loss = 0.0
     for _ in range(epochs):
@@ -87,11 +89,16 @@ def train(net, trainloader, epochs, lr, device):
             optimizer.step()
             running_loss += loss.item()
     avg_trainloss = running_loss / len(trainloader)
+    train_end_time = time.time()
+    total_duration = train_end_time - train_start_time
+    print(f"Total wall-clock time: {total_duration:.2f} seconds")
+
     return avg_trainloss
 
 
 def test(net, testloader, device):
-    """Validate the model on the test set."""
+    """Validate the model on the test set.
+    used on centralized acc """
     net.to(device)
     criterion = torch.nn.CrossEntropyLoss()
     correct, loss = 0, 0.0
