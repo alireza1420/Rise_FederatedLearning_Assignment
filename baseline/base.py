@@ -7,6 +7,7 @@ import torch.optim as optim
 import matplotlib.pyplot as plt
 import numpy as np
 import csv
+import time
 
 num_epochs=10
 
@@ -49,7 +50,7 @@ if __name__ == '__main__':
         [transforms.ToTensor(),
          transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
 
-    batch_size = 64
+    batch_size = 16
 
     trainset = torchvision.datasets.CIFAR10(root='./data', train=True,
                                             download=True, transform=transform)
@@ -70,12 +71,14 @@ if __name__ == '__main__':
 
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.SGD(net.parameters(), lr=0.001, momentum=0.9)
-
-    # At the start (outside the loop), write header
+    #start keeping record
     with open(f"metrics_{num_epochs}_epochs.csv", "w", newline='') as f:
         writer = csv.writer(f)
-        writer.writerow(["Epoch", "Loss", "Accuracy"])
+        writer.writerow(["Epoch", "Loss", "Accuracy","Record_time_eval_and_train"])
+
     for epoch in range(num_epochs):
+        total_start_time = time.time()
+
         # Training phase
         running_loss = 0.0
         for i, data in enumerate(trainloader, 0):
@@ -91,18 +94,21 @@ if __name__ == '__main__':
 
             running_loss += loss.item()
             
-            if i % 2000 == 1999:    # print every 2000 mini-batches
+            if i % 2000 == 1999:    # print every 2000 mini batches
                 print(f'[{epoch + 1}, {i + 1:5d}] loss: {running_loss / 2000:.3f}')
                 running_loss = 0.0
         
         # Calculate average loss for the epoch
-        avg_epoch_loss = running_loss / (len(trainloader) % 2000)  # remaining batches
+        avg_epoch_loss = running_loss / (len(trainloader) % 2000)  
         train_losses.append(avg_epoch_loss)
         
         # Evaluation phase - AFTER the epoch
         correct = 0
         total = 0
-        net.eval()  # Set to evaluation mode
+
+
+        net.eval() 
+
         with torch.no_grad():
             for data in testloader:
                 images, labels = data
@@ -113,18 +119,21 @@ if __name__ == '__main__':
                 _, predicted = torch.max(outputs, 1)
                 total += labels.size(0)
                 correct += (predicted == labels).sum().item()
-        
+        total_end_time = time.time()
+        total_duration = total_end_time - total_start_time
+        print(f"Total wall-clock time: {total_duration:.2f} seconds")
+
+
         epoch_accuracy = 100 * correct / total
         test_accuracies.append(epoch_accuracy)
-        net.train()  # Set back to training mode
+        net.train()
 
 
     
 
-        # Inside the loop
         with open(f"metrics_{num_epochs}_epochs.csv", "a", newline='') as f:
             writer = csv.writer(f)
-            writer.writerow([epoch + 1, avg_epoch_loss, epoch_accuracy])
+            writer.writerow([epoch + 1, avg_epoch_loss, epoch_accuracy,total_duration])
 
     print("Training done here!")
 
@@ -151,7 +160,8 @@ if __name__ == '__main__':
 
     correct = 0
     total = 0
-    # since we're not training, we don't need to calculate the gradients for our outputs
+
+    #accuracy on test data
     with torch.no_grad():
         for data in testloader:
             images, labels = data
@@ -161,7 +171,7 @@ if __name__ == '__main__':
 
             # calculate outputs by running images through the network
             outputs = net(images)
-            # the class with the highest energy is what we choose as prediction
+
             _, predicted = torch.max(outputs, 1)
             total += labels.size(0)
             correct += (predicted == labels).sum().item()
@@ -172,7 +182,7 @@ if __name__ == '__main__':
     correct_pred = {classname: 0 for classname in classes}
     total_pred = {classname: 0 for classname in classes}
 
-    # again no gradients needed
+#accuracy of each class
     with torch.no_grad():
         for data in testloader:
             images, labels = data
