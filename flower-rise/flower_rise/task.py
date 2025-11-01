@@ -1,8 +1,9 @@
-"""flower-rise: A Flower / PyTorch app."""
+"""app-pytorch: A Flower / PyTorch app."""
 
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from datasets import load_dataset
 from flwr_datasets import FederatedDataset
 from flwr_datasets.partitioner import IidPartitioner
 from torch.utils.data import DataLoader
@@ -22,13 +23,12 @@ class Net(nn.Module):
         self.fc3 = nn.Linear(84, 10)
 
     def forward(self, x):
-        x=self.pool(F.relu(self.conv1(x)))
-        x=self.pool(F.relu(self.conv2(x))) 
-        x = torch.flatten(x, 1)
+        x = self.pool(F.relu(self.conv1(x)))
+        x = self.pool(F.relu(self.conv2(x)))
+        x = x.view(-1, 16 * 5 * 5)
         x = F.relu(self.fc1(x))
         x = F.relu(self.fc2(x))
-        x = self.fc3(x)
-        return x
+        return self.fc3(x)
 
 
 fds = None  # Cache FederatedDataset
@@ -57,9 +57,17 @@ def load_data(partition_id: int, num_partitions: int):
     partition_train_test = partition.train_test_split(test_size=0.2, seed=42)
     # Construct dataloaders
     partition_train_test = partition_train_test.with_transform(apply_transforms)
-    trainloader = DataLoader(partition_train_test["train"], batch_size=16, shuffle=True)
-    testloader = DataLoader(partition_train_test["test"], batch_size=16)
+    trainloader = DataLoader(partition_train_test["train"], batch_size=32, shuffle=True)
+    testloader = DataLoader(partition_train_test["test"], batch_size=32)
     return trainloader, testloader
+
+
+def load_centralized_dataset():
+    """Load test set and return dataloader."""
+    # Load entire test set
+    test_dataset = load_dataset("uoft-cs/cifar10", split="test")
+    dataset = test_dataset.with_format("torch").with_transform(apply_transforms)
+    return DataLoader(dataset, batch_size=32)
 
 
 def train(net, trainloader, epochs, lr, device):
