@@ -7,13 +7,14 @@ from flwr.clientapp import ClientApp
 from flower_rise.task import Net, load_data
 from flower_rise.task import test as test_fn
 from flower_rise.task import train as train_fn
-
+import time
 # Flower ClientApp
 app = ClientApp()
 
 
 @app.train()
 def train(msg: Message, context: Context):
+    total_start_time = time.time()
     """Train the model on local data."""
 
     # Load the model and initialize it with the received weights
@@ -35,11 +36,14 @@ def train(msg: Message, context: Context):
         msg.content["config"]["lr"],
         device,
     )
-
+    total_end_time = time.time()
+    total_duration = total_end_time - total_start_time
+    print(f"Total wall-clock time: {total_duration:.2f} seconds")
     # Construct and return reply Message
     model_record = ArrayRecord(model.state_dict())
     metrics = {
         "train_loss": train_loss,
+        "time_train_record":total_duration,
         "num-examples": len(trainloader.dataset),
     }
     metric_record = MetricRecord(metrics)
@@ -49,6 +53,8 @@ def train(msg: Message, context: Context):
 
 @app.evaluate()
 def evaluate(msg: Message, context: Context):
+    total_start_time = time.time()
+
     """Evaluate the model on local data."""
 
     # Load the model and initialize it with the received weights
@@ -62,6 +68,10 @@ def evaluate(msg: Message, context: Context):
     num_partitions = context.node_config["num-partitions"]
     _, valloader = load_data(partition_id, num_partitions)
 
+    total_end_time = time.time()
+    total_duration = total_end_time - total_start_time
+    print(f"Total wall-clock time: {total_duration:.2f} seconds")
+
     # Call the evaluation function
     eval_loss, eval_acc = test_fn(
         model,
@@ -73,6 +83,7 @@ def evaluate(msg: Message, context: Context):
     metrics = {
         "eval_loss": eval_loss,
         "eval_acc": eval_acc,
+         "time_evaluate_record":total_duration,
         "num-examples": len(valloader.dataset),
     }
     metric_record = MetricRecord(metrics)
