@@ -38,6 +38,7 @@ def train(msg: Message, context: Context):
         trainloader,
         context.run_config["local-epochs"],
         msg.content["config"]["lr"],
+        msg.content["config"]["momentum"],
         device,
     )
     
