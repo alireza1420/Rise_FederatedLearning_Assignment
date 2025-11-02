@@ -25,9 +25,9 @@ serverapp = "flower_rise.server_app:app"
 clientapp = "flower_rise.client_app:app"
 
 [tool.flwr.app.config]
-num-server-rounds = 30
+num-server-rounds = 4
 fraction-train = 0.5
-local-epochs = 5
+local-epochs = 10
 
 [tool.flwr.federations]
 default = "local-simulation"
