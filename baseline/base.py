@@ -131,7 +131,7 @@ if __name__ == '__main__':
 
     
 
-        with open(f"metrics_{num_epochs}_epochs.csv", "a", newline='') as f:
+        with open(f"./Base_Records/metrics_{num_epochs}_epochs.csv", "a", newline='') as f:
             writer = csv.writer(f)
             writer.writerow([epoch + 1, avg_epoch_loss, epoch_accuracy,total_duration])
 
