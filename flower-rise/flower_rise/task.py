@@ -70,12 +70,13 @@ def load_centralized_dataset():
     return DataLoader(dataset, batch_size=32)
 
 
-def train(net, trainloader, epochs, lr,momentum, device):
+def train(net, trainloader, epochs, lr, device):
     """Train the model on the training set."""
     train_start_time = time.time()
-    net.to(device)  # move model to GPU if available
+    net.to(device)  
     criterion = torch.nn.CrossEntropyLoss().to(device)
-    optimizer = torch.optim.SGD(net.parameters(), lr=lr,momentum=momentum)
+    # momentum=momentum
+    optimizer = torch.optim.Adam(net.parameters(), lr=lr)
     net.train()
     running_loss = 0.0
     for _ in range(epochs):

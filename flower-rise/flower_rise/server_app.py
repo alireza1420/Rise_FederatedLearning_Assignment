@@ -30,7 +30,8 @@ def main(grid: Grid, context: Context) -> None:
     result = strategy.start(
         grid=grid,
         initial_arrays=arrays,
-        train_config=ConfigRecord({"lr": 0.00655453,"momentum":0.838864}),
+        #lr=0.00655453 , momentum = 0.838864
+        train_config=ConfigRecord({"lr": 0.00655453}),
         num_rounds=num_rounds,
         evaluate_fn=global_evaluate,
     )
