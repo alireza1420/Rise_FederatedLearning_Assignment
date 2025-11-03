@@ -63,8 +63,6 @@ def load_data(partition_id: int, num_partitions: int):
     return trainloader, testloader
 
 
-
-
 def load_centralized_dataset():
     """Load test set and return dataloader."""
     # Load entire test set
@@ -73,23 +71,37 @@ def load_centralized_dataset():
     return DataLoader(dataset, batch_size=32)
 
 
-def train(net, trainloader, epochs, lr,momentum, device):
+def train(net, trainloader, epochs, lr,momentum, device,mu=0.0,global_params=None):
     """Train the model on the training set."""
     train_start_time = time.time()
     net.to(device)  # move model to GPU if available
     criterion = torch.nn.CrossEntropyLoss().to(device)
     optimizer = torch.optim.SGD(net.parameters(), lr=lr,momentum=momentum)
+
+    if mu > 0 and global_params is not None:
+        global_params = [p.clone().detach() for p in global_params]
+
     net.train()
     running_loss = 0.0
+
     for _ in range(epochs):
         for batch in trainloader:
             images = batch["img"].to(device)
             labels = batch["label"].to(device)
             optimizer.zero_grad()
             loss = criterion(net(images), labels)
+# mu logic
+            if mu > 0 and global_params is not None:
+                proximal_term=0.0
+                for local_param, global_param in zip(net.parameters(), global_params):
+                    proximal_term += torch.sum((local_param - global_param.to(device)) ** 2)
+                loss += (mu / 2) * proximal_term
+
+
             loss.backward()
             optimizer.step()
             running_loss += loss.item()
+
     avg_trainloss = running_loss / len(trainloader)
     train_end_time = time.time()
     total_duration = train_end_time - train_start_time
@@ -104,6 +116,7 @@ def test(net, testloader, device):
     net.to(device)
     criterion = torch.nn.CrossEntropyLoss()
     correct, loss = 0, 0.0
+    net.eval()
     with torch.no_grad():
         for batch in testloader:
             images = batch["img"].to(device)

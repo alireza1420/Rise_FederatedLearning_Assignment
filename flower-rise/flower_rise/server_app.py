@@ -3,11 +3,13 @@
 import torch
 from flwr.app import ArrayRecord, ConfigRecord, Context, MetricRecord
 from flwr.serverapp import Grid, ServerApp
-from flwr.serverapp.strategy import FedAvg
+from flwr.serverapp.strategy import FedProx
 
-from flower_rise.task import Net, load_centralized_dataset, test
+from flower_rise.task_Fedprox import Net, load_centralized_dataset, test
 
 # Create ServerApp
+
+
 app = ServerApp()
 
 
@@ -24,7 +26,11 @@ def main(grid: Grid, context: Context) -> None:
     arrays = ArrayRecord(global_model.state_dict())
 
     # Initialize FedAvg strategy
-    strategy = FedAvg(fraction_train=fraction_train)
+    strategy = FedProx(
+        fraction_train=fraction_train,
+        proximal_mu=0.01,  
+        
+    )
 
     # Start strategy, run FedAvg for `num_rounds`
     result = strategy.start(
