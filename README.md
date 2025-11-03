@@ -1,20 +1,6 @@
 # Rise FederatedLearning Assignment  
 *This repository contains the files and branches related to Rise Federated learning Assignment on Task 1*
 
-## Table of Contents
-1. [Project Overview](#project-overview)  
-2. [Motivation](#motivation)  
-3. [Repository Structure](#repository-structure)  
-4. [Requirements & Setup](#requirements--setup)  
-5. [Usage](#usage)  
-6. [How It Works](#how-it-works)  
-   - Centralized CNN baseline  
-   - Federated Learning setup (with Flower)  
-7. [Experiments & Results](#experiments--results)  
-8. [How to Extend / Close-to-Production Considerations](#how-to-extend--close-to-production-considerations)  
-9. [Limitations](#limitations)  
-10. [Contributing](#contributing)  
-11. [License](#license)  
 
 ## Project Overview  
 This project implements two main variants of model training on the CIFAR-10 dataset:  
