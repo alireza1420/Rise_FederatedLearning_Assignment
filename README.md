@@ -1,5 +1,5 @@
 # Rise FederatedLearning Assignment  
-*A simple Federated Learning setup and a centralized CNN model using CIFAR-10*
+*This repository contains the files and branches related to Rise Federated learning Assignment on Task 1*
 
 ## Table of Contents
 1. [Project Overview](#project-overview)  
@@ -21,14 +21,16 @@ This project implements two main variants of model training on the CIFAR-10 data
 - A standard **centralized** convolutional neural network (CNN) model trained in the typical way.  
 - A **federated learning** setup in which multiple client nodes train on local splits and aggregate into a global model using the Flower framework.
 
-The goal is to compare performance, communication overhead, resource usage (CPU/GPU) — and in your extended work, maybe implement algorithms like FedProx or FedCS (as you’re already aiming for) and monitor CPU/GPU usage across clients.
+The goal is to analyse the results under different scenarios and hyperparameters
 
-## Motivation  
-Why this project? A few reasons:  
-- Federated learning is increasingly relevant for privacy-preserving distributed training (e.g., mobile devices, edge).  
-- Implementing a baseline (centralized) gives a meaningful comparison point.  
-- Your interest in resource monitoring (CPU/GPU) means this project can demonstrate more than just accuracy: also scalability, heterogeneity, client speed differences, algorithmic robustness.  
-- It’s a good assignment to build foundations and experiment while you later implement FedProx/FedCS etc.
+## ! Important  
+As some of the strategies required changes to the files, the main branch is updated with FedProx. While it can still run other strategies, implemented and mentioned in the document, we encourage you
+to follow the branches inorder to first see the implementation process from base, FedAvg, FedProx, Non-iid Implementation, and FedAdadagrad.
+1-cent_eval_fl
+2-ray_tune_base
+3-Records_FedAvg
+4-Records_FedProx
+5-Records_FedAdagrad
 
 ## Repository Structure  
 Here’s how the repository is laid out (modify based on your actual files):  
