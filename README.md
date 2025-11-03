@@ -39,7 +39,7 @@ While the main branch remains backward-compatible with other implemented strateg
 Additionally, a **Non-IID data partitioning** implementation is available in the relevant branch, allowing the evaluation of performance under heterogeneous data conditions.
 
 **Recommendation:**  
-Start by checking out the earliest branches (e.g., `1-cent_eval_fl`, `3-Records_FedAvg`) to understand the incremental changes in both the model logic and configuration. The main branch should be used when testing or benchmarking **FedProx**, or when comparing across all strategies.
+Start by checking out the earliest branches (e.g.,`0-initial_setup` `1-cent_eval_fl`, `3-Records_FedAvg`) to understand the incremental changes in both the model logic and configuration. The main branch should be used when testing or benchmarking **FedProx**, or when comparing across all strategies.
 
 
 ## Repository Structure  
