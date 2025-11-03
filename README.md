@@ -1,85 +1,34 @@
-<invoke name="artifacts"><parameter name="command">create</parameter><parameter name="type">text/markdown</parameter><parameter name="id">fl_readme</parameter><parameter name="title">Federated Learning Repository README</parameter><parameter name="content"># Federated Learning with Flower Framework
-A comprehensive implementation of various federated learning strategies using the Flower framework on CIFAR-10 dataset.
-📋 Table of Contents
+# Rise FederatedLearning Assignment  
+*A simple Federated Learning setup and a centralized CNN model using CIFAR-10*
 
-Overview
-Repository Structure
-Implemented Strategies
-Installation
-Quick Start
-Configuration
-Data Distributions
-Running Experiments
-Results and Metrics
-Branch Organization
-Troubleshooting
+## Table of Contents
+1. [Project Overview](#project-overview)  
+2. [Motivation](#motivation)  
+3. [Repository Structure](#repository-structure)  
+4. [Requirements & Setup](#requirements--setup)  
+5. [Usage](#usage)  
+6. [How It Works](#how-it-works)  
+   - Centralized CNN baseline  
+   - Federated Learning setup (with Flower)  
+7. [Experiments & Results](#experiments--results)  
+8. [How to Extend / Close-to-Production Considerations](#how-to-extend--close-to-production-considerations)  
+9. [Limitations](#limitations)  
+10. [Contributing](#contributing)  
+11. [License](#license)  
 
-🔍 Overview
-This repository contains implementations of multiple federated learning strategies with support for both IID (Independent and Identically Distributed) and non-IID data distributions. Each strategy is implemented in a separate branch for easy comparison and experimentation.
-Key Features:
+## Project Overview  
+This project implements two main variants of model training on the CIFAR-10 dataset:  
+- A standard **centralized** convolutional neural network (CNN) model trained in the typical way.  
+- A **federated learning** setup in which multiple client nodes train on local splits and aggregate into a global model using the Flower framework.
 
-Multiple federated learning strategies (FedAvg, FedProx, FedAdagrad)
-Support for IID and non-IID data distributions (Dirichlet, Pathological, Exponential)
-Comprehensive metrics tracking (loss, accuracy, training time)
-CSV logging for all experiments
-Configurable hyperparameters via pyproject.toml
+The goal is to compare performance, communication overhead, resource usage (CPU/GPU) — and in your extended work, maybe implement algorithms like FedProx or FedCS (as you’re already aiming for) and monitor CPU/GPU usage across clients.
 
-📁 Repository Structure
-flower-rise/
-├── flower_rise/
-│   ├── __init__.py
-│   ├── task.py                    # Data loading and model definition
-│   ├── task_fedprox.py           # FedProx-specific task file
-│   ├── task_fedadagrad.py        # FedAdagrad-specific task file
-│   ├── client_app.py             # Client application
-│   ├── server_app.py             # Server application
-│   ├── custom_strategy.py        # Custom strategy implementations
-│   └── ...
-├── Fed_AVG_Records/              # FedAvg experiment results
-├── Fed_Prox_Records/             # FedProx experiment results
-├── Fed_Adagrad_Records/          # FedAdagrad experiment results
-├── pyproject.toml                # Flower configuration
-├── requirements.txt              # Python dependencies
-└── README.md                     # This file
-```
+## Motivation  
+Why this project? A few reasons:  
+- Federated learning is increasingly relevant for privacy-preserving distributed training (e.g., mobile devices, edge).  
+- Implementing a baseline (centralized) gives a meaningful comparison point.  
+- Your interest in resource monitoring (CPU/GPU) means this project can demonstrate more than just accuracy: also scalability, heterogeneity, client speed differences, algorithmic robustness.  
+- It’s a good assignment to build foundations and experiment while you later implement FedProx/FedCS etc.
 
-## 🎯 Implemented Strategies
-
-### 1. **FedAvg (Federated Averaging)**
-The baseline federated learning algorithm that averages model weights from all participating clients.
-
-**Branch:** `main` or `fedavg`
-
-**Key Parameters:**
-- `fraction-train`: Fraction of clients participating in each round
-- `local-epochs`: Number of local training epochs per client
-- `lr`: Learning rate
-
-### 2. **FedProx (Federated Proximal)**
-Adds a proximal term to the loss function to prevent client drift from the global model, especially useful for heterogeneous data.
-
-**Branch:** `fedprox`
-
-**Key Parameters:**
-- `mu`: Proximal term coefficient (0.01 - 1.0)
-  - Higher values = stronger regularization toward global model
-  - Recommended: 0.01 (light), 0.1 (moderate), 1.0 (strong)
-
-**Loss Function:**
-```
-L_FedProx = L(w) + (μ/2) * ||w - w_global||²
-```
-
-### 3. **FedAdagrad (Federated Adagrad)**
-Uses adaptive learning rates by accumulating squared gradients on the server side, providing better convergence in non-IID settings.
-
-**Branch:** `fedadagrad`
-
-**Key Parameters:**
-- `server-lr`: Server-side learning rate (η)
-- `tau`: Initial accumulator value for numerical stability (1e-9)
-
-**Update Rule:**
-```
-v_t = v_{t-1} + Δ²
-w_new = w_old - η * Δ / sqrt(v_t)
+## Repository Structure  
+Here’s how the repository is laid out (modify based on your actual files):  
