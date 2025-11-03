@@ -5,7 +5,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from datasets import load_dataset
 from flwr_datasets import FederatedDataset
-from flwr_datasets.partitioner import IidPartitioner
+from flwr_datasets.partitioner import IidPartitioner, DirichletPartitioner
 from torch.utils.data import DataLoader
 from torchvision.transforms import Compose, Normalize, ToTensor
 import time
@@ -31,8 +31,8 @@ class Net(nn.Module):
         x = F.relu(self.fc2(x))
         return self.fc3(x)
 
-
-fds = None  # Cache FederatedDataset
+#multiple train - iid, non-iid
+fds_cache = {}
 
 pytorch_transforms = Compose([ToTensor(), Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
 
@@ -43,16 +43,19 @@ def apply_transforms(batch):
     return batch
 
 
-def load_data(partition_id: int, num_partitions: int):
-    """Load partition CIFAR10 data."""
-    # Only initialize `FederatedDataset` once
-    global fds
-    if fds is None:
-        partitioner = IidPartitioner(num_partitions=num_partitions)
-        fds = FederatedDataset(
+def load_data_iid(partition_id: int, num_partitions: int):
+    cache_key = "iid"
+
+    if cache_key not in fds_cache:
+        partitioner= IidPartitioner(num_partitions=num_partitions)
+        fds_cache[cache_key]=FederatedDataset(
             dataset="uoft-cs/cifar10",
             partitioners={"train": partitioner},
+
         )
+
+    fds = fds_cache[cache_key]
+
     partition = fds.load_partition(partition_id)
     # Divide data on each node: 80% train, 20% test
     partition_train_test = partition.train_test_split(test_size=0.2, seed=42)
@@ -62,8 +65,46 @@ def load_data(partition_id: int, num_partitions: int):
     testloader = DataLoader(partition_train_test["test"], batch_size=32)
     return trainloader, testloader
 
+def load_data_dirichlet(partition_id: int, num_partitions: int, alpha: float = 0.5):
 
+    cache_key = f"dirichlet_{alpha}"
+    
+    if cache_key not in fds_cache:
+        partitioner = DirichletPartitioner(
+            num_partitions=num_partitions,
+            partition_by="label",
+            alpha=alpha,
+            min_partition_size=10,
+            self_balancing=True,
+        )
+        fds_cache[cache_key] = FederatedDataset(
+            dataset="uoft-cs/cifar10",
+            partitioners={"train": partitioner},
+        )
+    
+    fds = fds_cache[cache_key]
+    partition = fds.load_partition(partition_id)
+    partition_train_test = partition.train_test_split(test_size=0.2, seed=42)
+    partition_train_test = partition_train_test.with_transform(apply_transforms)
+    
+    trainloader = DataLoader(partition_train_test["train"], batch_size=32, shuffle=True)
+    testloader = DataLoader(partition_train_test["test"], batch_size=32)
+    
+    label_counts = analyze_class_distribution(trainloader)
+    print(f"[Dirichlet α={alpha}] Client {partition_id}: {len(trainloader.dataset)} train, {len(testloader.dataset)} test")
+    print(f"  Class distribution: {dict(sorted(label_counts.items()))}")
+    
+    return trainloader, testloader
 
+def analyze_class_distribution(dataloader):
+    """counts how items are distributed."""
+    label_counts = {}
+    for batch in dataloader:
+        labels = batch["label"]
+        for label in labels:
+            label_item = label.item()
+            label_counts[label_item] = label_counts.get(label_item, 0) + 1
+    return label_counts
 
 def load_centralized_dataset():
     """Load test set and return dataloader."""

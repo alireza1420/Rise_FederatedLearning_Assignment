@@ -5,10 +5,11 @@ from flwr.app import ArrayRecord, Context, Message, MetricRecord, RecordDict
 from flwr.clientapp import ClientApp
 import time
 from pathlib import Path
-from flower_rise.task import Net, load_data
-from flower_rise.task import test as test_fn
-from flower_rise.task import train as train_fn
+from flower_rise.task_Fedprox import Net, load_data
+from flower_rise.task_Fedprox import test as test_fn
+from flower_rise.task_Fedprox import train as train_fn
 import csv
+import copy
 
 # Flower ClientApp
 app = ClientApp()
@@ -19,7 +20,10 @@ def train(msg: Message, context: Context):
     total_start_time = time.time()
         #start keeping record
 
-    """Train the model on local data."""
+#which distribution to choose
+    distribution_type = context.run_config.get("data-distribution", "iid")
+    alpha = context.run_config.get("dirichlet-alpha", 0.5)
+    num_classes = context.run_config.get("pathological-classes", 2)
 
     # Load the model and initialize it with the received weights
     model = Net()
@@ -27,19 +31,33 @@ def train(msg: Message, context: Context):
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     model.to(device)
 
+    global_params = [p.clone().detach() for p in model.parameters()]
+
+
     # Load the data
     partition_id = context.node_config["partition-id"]
     num_partitions = context.node_config["num-partitions"]
-    trainloader, _ = load_data(partition_id, num_partitions)
+    trainloader, _ = load_data(partition_id, num_partitions
+        , distribution=distribution_type,
+        alpha=alpha,
+        num_classes_per_client=num_classes,
+)
+
+    local_epochs = context.run_config["local-epochs"]
+    lr = msg.content["config"]["lr"]
+    momentum = msg.content["config"]["momentum"]
+    mu = msg.content["config"].get("mu", 0.0)  # Get mu from config, default 0
 
     # Call the training function
     train_loss = train_fn(
         model,
         trainloader,
-        context.run_config["local-epochs"],
-        msg.content["config"]["lr"],
-        msg.content["config"]["momentum"],
+        local_epochs,
+        lr,
+        momentum,
         device,
+        mu=mu,
+        global_params=global_params,
     )
     
     total_end_time = time.time()
@@ -63,6 +81,11 @@ def train(msg: Message, context: Context):
 
 @app.evaluate()
 def evaluate(msg: Message, context: Context):
+    #which distribution to choose
+    distribution_type = context.run_config.get("data-distribution", "iid")
+    alpha = context.run_config.get("dirichlet-alpha", 0.5)
+    num_classes = context.run_config.get("pathological-classes", 2)
+
     total_start_time = time.time()
 
     eval_csv_path = Path(f"Fed_records/ten_rounds/client_eval.csv")
@@ -81,7 +104,10 @@ def evaluate(msg: Message, context: Context):
     # Load the data
     partition_id = context.node_config["partition-id"]
     num_partitions = context.node_config["num-partitions"]
-    _, valloader = load_data(partition_id, num_partitions)
+    _, valloader = load_data(partition_id, num_partitions
+        , distribution=distribution_type,
+        alpha=alpha,
+        num_classes_per_client=num_classes,)
 
 
 

@@ -25,12 +25,16 @@ serverapp = "flower_rise.server_app:app"
 clientapp = "flower_rise.client_app:app"
 
 [tool.flwr.app.config]
-num-server-rounds = 20
+num-server-rounds = 10
 fraction-train = 0.5
 local-epochs = 10
+
+data-distribution = "dirichlet"
+dirichlet-alpha = 0.5
 
 [tool.flwr.federations]
 default = "local-simulation"
 
 [tool.flwr.federations.local-simulation]
 options.num-supernodes = 20
+
